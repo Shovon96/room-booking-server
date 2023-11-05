@@ -34,7 +34,7 @@ async function run() {
     // collections
     const featuredCollections = client.db('hotel').collection('features');
 
-    // features releted apis
+    // features card releted apis
     app.post('/features', async (req, res) => {
         const feature = req.body;
         const result = await featuredCollections.insertOne(feature);
