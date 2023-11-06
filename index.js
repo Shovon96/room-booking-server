@@ -33,6 +33,7 @@ async function run() {
 
     // collections
     const featuredCollections = client.db('hotel').collection('features');
+    const roomsCollections = client.db('hotel').collection('rooms');
 
     // features card releted apis
     app.post('/features', async (req, res) => {
@@ -45,6 +46,26 @@ async function run() {
         const cursor = featuredCollections.find();
         const result = await cursor.toArray()
         res.send(result)
+    })
+
+    // rooms rleted apis
+    app.post('/rooms', async (req, res) => {
+        const room = req.body;
+        const result = await roomsCollections.insertOne(room);
+        res.send(result)
+    })
+
+    app.get('/rooms', async (req, res) => {
+        const cursor = roomsCollections.find();
+        const result = await cursor.toArray()
+        res.send(result)
+    })
+
+    app.get('/rooms/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await roomsCollections.findOne(query)
+        res.send(result);
     })
 
 
