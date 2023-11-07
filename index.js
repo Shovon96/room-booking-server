@@ -35,6 +35,7 @@ async function run() {
         const featuredCollections = client.db('hotel').collection('features');
         const roomsCollections = client.db('hotel').collection('rooms');
         const bookingCollections = client.db('hotel').collection('booking');
+        const reviewsCollections = client.db('hotel').collection('reviews');
 
         // features card releted apis
         app.post('/features', async (req, res) => {
@@ -90,6 +91,13 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await bookingCollections.deleteOne(query);
+            res.send(result)
+        })
+
+        // reviews releted apis
+        app.post('/reviews', async (req, res) => {
+            const room = req.body;
+            const result = await reviewsCollections.insertOne(room);
             res.send(result)
         })
 
