@@ -60,12 +60,7 @@ app.post("/jwt", async (req, res) => {
       })
       .send({ success: true });
   });
-// middlewares
-// const logger = async (req, res, next) => {
-//     console.log('called: ', req.host, req.originalUrl)
-//     next()
-// }
-
+  
 const verifyToken = async (req, res, next) => {
     const token = req.cookies?.token;
     console.log("value of cookie in middleware", token);
@@ -94,20 +89,6 @@ async function run() {
         const roomsCollections = client.db('hotel').collection('rooms');
         const bookingCollections = client.db('hotel').collection('booking');
         const reviewsCollections = client.db('hotel').collection('reviews');
-
-
-        // jwt token releted apis
-        // app.post('/jwt', verifyToken, async (req, res) => {
-        //     const user = req.body;
-        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-        //     res
-        //         .cookie('token', token, {
-        //             httpOnly: true,
-        //             secure: false,
-        //             // sameSite: 'none'
-        //         })
-        //         .send({ success: true })
-        // })
 
         // features card releted apis
         app.post('/features', async (req, res) => {
@@ -180,9 +161,6 @@ async function run() {
         })
 
       
-      
-
-
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
