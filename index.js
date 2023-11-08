@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-// const jwt = require('jsonwebtoken');
-// const cookieParser = require('cookie-parser')
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
@@ -9,9 +9,16 @@ const port = process.env.PORT || 5000;
 
 
 //midleware 
-app.use(cors())
+app.use(
+    cors({
+      origin: [
+        "http://localhost:5173",
+      ],
+      credentials: true,
+    })
+  );
 app.use(express.json());
-// app.use(cookieParser())
+app.use(cookieParser())
 
 
 
@@ -26,6 +33,57 @@ const client = new MongoClient(uri, {
     }
 });
 
+app.post("/jwt", async (req, res) => {
+    const user = req.body;
+    console.log(process.env.ACCESS_TOKEN_SECRET);
+   try {
+    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production', 
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true });
+   } catch (error) {
+    console.log(error)
+   }
+  });
+  app.post("/logout", async (req, res) => {
+    res
+      .clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+      })
+      .send({ success: true });
+  });
+// middlewares
+// const logger = async (req, res, next) => {
+//     console.log('called: ', req.host, req.originalUrl)
+//     next()
+// }
+
+const verifyToken = async (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log("value of cookie in middleware", token);
+    if (!token) {
+        return res.status(401).send({ message: 'Unauthorized User' })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        // error
+        if (err) {
+            console.log(err);
+            return res.status(401).send({ message: "Unauthorized User" })
+        }
+        // if token is valid then it would be decoded
+        console.log("value in the token", decoded);
+        req.user = decoded;
+        next()
+    })
+}
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -36,6 +94,20 @@ async function run() {
         const roomsCollections = client.db('hotel').collection('rooms');
         const bookingCollections = client.db('hotel').collection('booking');
         const reviewsCollections = client.db('hotel').collection('reviews');
+
+
+        // jwt token releted apis
+        // app.post('/jwt', verifyToken, async (req, res) => {
+        //     const user = req.body;
+        //     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+        //     res
+        //         .cookie('token', token, {
+        //             httpOnly: true,
+        //             secure: false,
+        //             // sameSite: 'none'
+        //         })
+        //         .send({ success: true })
+        // })
 
         // features card releted apis
         app.post('/features', async (req, res) => {
@@ -77,7 +149,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/bookings/:email', async (req, res) => {
+        app.get('/bookings/:email',verifyToken, async (req, res) => {
             const email = req.params.email;
             // console.log(email)
             const query = { email: email };
@@ -106,6 +178,9 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
+
+      
+      
 
 
         // Send a ping to confirm a successful connection
