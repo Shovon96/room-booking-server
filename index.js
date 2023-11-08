@@ -11,12 +11,12 @@ const port = process.env.PORT || 5000;
 //midleware 
 app.use(
     cors({
-      origin: [
-        "http://localhost:5173",
-      ],
-      credentials: true,
+        origin: [
+            "http://localhost:5173",
+        ],
+        credentials: true,
     })
-  );
+);
 app.use(express.json());
 app.use(cookieParser())
 
@@ -35,31 +35,31 @@ const client = new MongoClient(uri, {
 app.post("/jwt", async (req, res) => {
     const user = req.body;
     console.log(process.env.ACCESS_TOKEN_SECRET);
-   try {
-    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h",
-      });
-      res
-        .cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production', 
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+    try {
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: "1h",
+        });
+        res
+            .cookie("token", token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            })
+            .send({ success: true });
+    } catch (error) {
+        console.log(error)
+    }
+});
+app.post("/logout", async (req, res) => {
+    res
+        .clearCookie("token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         })
         .send({ success: true });
-   } catch (error) {
-    console.log(error)
-   }
-  });
-  app.post("/logout", async (req, res) => {
-    res
-      .clearCookie("token", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', 
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-      })
-      .send({ success: true });
-  });
-  
+});
+
 const verifyToken = async (req, res, next) => {
     const token = req.cookies?.token;
     console.log("value of cookie in middleware", token);
@@ -115,6 +115,16 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/sort', async (req, res) => {
+            const {sort} = req.query;
+            if (sort) {
+                const result = await roomsCollections.find().sort({ price: -1 }).toArray()
+                res.send(result)
+                return
+            }
+            res.send('invalid request')
+        })
+
         app.get('/rooms/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -129,7 +139,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/bookings/:email',verifyToken, async (req, res) => {
+        app.get('/bookings/:email', verifyToken, async (req, res) => {
             const email = req.params.email;
             // console.log(email)
             const query = { email: email };
@@ -159,7 +169,7 @@ async function run() {
             res.send(result)
         })
 
-      
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
