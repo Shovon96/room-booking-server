@@ -12,7 +12,8 @@ const port = process.env.PORT || 5000;
 app.use(
     cors({
         origin: [
-            "http://localhost:5173",
+            "https://hotel-booking-8afda.firebaseapp.com",
+            "https://hotel-booking-8afda.web.app"
         ],
         credentials: true,
     })
